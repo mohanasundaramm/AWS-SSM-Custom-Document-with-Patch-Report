@@ -1,0 +1,6 @@
+Key                       Value
+BUCKET                    aws-ssm-patch-report-bucket
+PLATFORM_FILTER           Linux
+PREFIX                    patch-reports
+WAIT_FOR_INSTALL_SEC      60
+WRITE_CONSOLIDATED        true

@@ -1,0 +1,39 @@
+description: Patch Ubuntu instances and export patch reports to S3
+schemaVersion: '0.3'
+assumeRole: '{{ AutomationAssumeRole }}'
+parameters:
+  AutomationAssumeRole:
+    type: String
+    description: (Required) IAM role that SSM Automation assumes
+  PatchGroup:
+    type: String
+    description: Tag value for PatchGroup (e.g., UbuntuServers)
+  LambdaFunctionName:
+    type: String
+    description: The Lambda function that writes patch CSVs to S3
+    default: patch-report-exporter
+mainSteps:
+  - name: RunPatchBaseline
+    action: aws:runCommand
+    nextStep: ExportPatchReport
+    isEnd: false
+    onFailure: Abort
+    inputs:
+      DocumentName: AWS-RunPatchBaseline
+      Targets:
+        - Key: tag:PatchGroup
+          Values:
+            - '{{ PatchGroup }}'
+      Parameters:
+        Operation: Install
+      TimeoutSeconds: 7200
+  - name: ExportPatchReport
+    action: aws:invokeLambdaFunction
+    isEnd: true
+    inputs:
+      FunctionName: '{{ LambdaFunctionName }}'
+      Payload: |
+        {
+          "tag_key": "PatchGroup",
+          "tag_value": "{{ PatchGroup }}"
+        }
